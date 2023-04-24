@@ -1,27 +1,27 @@
-# quark
+# Test Class material
 
 Fundamental **TypeScript** project template
 
 > Clone, fork or use as a template repository for creating your next **TypeScript** project.
 
 ```bash
-git clone https://github.com/AlbertoBasalo/quark your-project
+git clone https://github.com/WebTestingTrit/test-class.git your-project
 cd your-project
 npm install
 ```
 
 ## 🎯 Motivation
 
-Avoid start from an empty repository.
-
-Have a template to create _TypeScript_ repositories with a project already configured.
-
-A **boilerplate** ready to apply clean code techniques and testing.
+- Develop applications with less bugs.
+- Document the functionality of the code.
+- Craft better solutions by refactoring your code.
 
 ### 📚 Documentation
 
 - [Workflows for develop, test and deploy](./docs/workflows.md)
 - [VS code Settings and Extensions](./docs/settings.md)
+- [4 tips to write tests (infographic)](./docs/4_tips_for_writing_tests.png)
+- [Test your TypeScript code with ease (article)](https://albertobasalo.medium.com/test-your-typescript-code-with-ease-53a8ebbbdbce?sk=90af419a9ad7c080dca6ed6af657642f)
 
 ---
 
