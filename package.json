@@ -22,7 +22,7 @@
     "test": "jest --coverage",
     "build": "tsc -p tsconfig.json",
     "dev": "ts-node ./src/main.ts",
-    "watch": "jest --watch",
+    "watch": "jest --watch --verbose=false",
     "ts-node": "ts-node",
     "format": "prettier --write \"./**/*.{ts,json}\"",
     "lint": "eslint src --ext .ts",

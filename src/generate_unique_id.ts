@@ -1,45 +1,109 @@
 /**
- * Generates a unique ID string.
+ * Generates a unique ID string of a desired length.
+ * @param totalLength The total length of the ID string. Defaults to 14.
  * @example
- * const uniqueId = generateUniqueId();
+ * const uniqueId = new IdGenerator().generate();
  * console.log(uniqueId); // Output: e.g., "17a8a241fb"
  * @returns A unique ID string
  */
-export function generateRandomId(): string {
-  // Get current timestamp in milliseconds
-  const timestamp = new Date().getTime();
+export class IdGenerator {
+  private static discriminator = -1;
+  private static currentTimestamp = 0;
+  private static readonly TIMESTAMP_MIN_LENGTH = 11;
+  private static readonly BASE = 16;
+  private timestampLength: number = 12;
+  private hasDiscriminator: boolean = true;
+  private maxDiscriminator: number = 255;
+  private discriminatorLength: number = 2;
 
-  // Generate a random discriminator between 0 and 255 (1 byte)
-  const discriminator = Math.floor(Math.random() * 256);
+  constructor(totalLength = 14) {
+    if (totalLength < IdGenerator.TIMESTAMP_MIN_LENGTH) {
+      throw new Error(`ID must be >= ${IdGenerator.TIMESTAMP_MIN_LENGTH} long.`);
+    }
+    this.configureDiscriminator(totalLength);
+  }
 
-  // Convert the timestamp and discriminator to hexadecimal strings
-  const timestampHex = timestamp.toString(16);
-  const discriminatorHex = discriminator.toString(16);
+  generate(): string {
+    let uniqueId = "";
+    while (uniqueId === "") {
+      uniqueId = this.tryGetUniqueId();
+    }
+    return uniqueId;
+  }
 
-  // Pad the hexadecimal strings with leading zeros to ensure fixed length
-  const paddedTimestampHex = timestampHex.padStart(14, "0");
-  const paddedDiscriminatorHex = discriminatorHex.padStart(2, "0");
+  private tryGetUniqueId() {
+    let uniqueId: string = "";
+    try {
+      const paddedBaseTimestampBase = this.getPaddedBaseTimestamp();
+      const paddedBaseDiscriminator = this.getPaddedBaseDiscriminator();
+      uniqueId = paddedBaseTimestampBase + paddedBaseDiscriminator;
+    } catch (error: any) {
+      this.detectCollision(error);
+      uniqueId = "";
+    }
+    return uniqueId;
+  }
 
-  // Concatenate the padded hexadecimal strings
-  const uniqueId = paddedTimestampHex + paddedDiscriminatorHex;
+  private detectCollision(error: any) {
+    if (error.message !== "Collision rate reached.") {
+      throw error;
+    }
+  }
 
-  return uniqueId;
-}
+  private configureDiscriminator(totalLength: number) {
+    this.discriminatorLength = totalLength - IdGenerator.TIMESTAMP_MIN_LENGTH;
+    this.hasDiscriminator = this.discriminatorLength > 0;
+    this.timestampLength = totalLength - this.discriminatorLength;
+    this.maxDiscriminator = this.calculateMaxDiscriminator();
+  }
 
-let counter = 0;
+  private calculateMaxDiscriminator(): number {
+    const totalDifferentValues = Math.pow(IdGenerator.BASE, this.discriminatorLength);
+    const maxDiscriminator = totalDifferentValues - 1;
+    return maxDiscriminator;
+  }
 
-export function generateUniqueId(): string {
-  // Get current timestamp in milliseconds
-  const timestamp = new Date().getTime();
+  private getPaddedBaseTimestamp() {
+    const timestamp = this.getTimestamp();
+    const paddedTimestampHex = this.transformToPaddedBase(timestamp, this.timestampLength);
+    return paddedTimestampHex;
+  }
 
-  // Increment the counter and apply a bit mask to keep it within 8 bits (1 byte)
-  counter = (counter + 1) & 0xff;
+  private getPaddedBaseDiscriminator(): string {
+    if (!this.hasDiscriminator) return "";
+    const discriminator = this.getDiscriminator();
+    const paddedDiscriminatorHex = this.transformToPaddedBase(discriminator, this.discriminatorLength);
+    return paddedDiscriminatorHex;
+  }
 
-  // Combine the timestamp and counter as a 64-bit number
-  const combinedValue = Math.abs((timestamp << 8) | counter);
+  private transformToPaddedBase(source: number, length: number): string {
+    const base = source.toString(IdGenerator.BASE);
+    const paddedBase = base.padStart(length, "0");
+    return paddedBase;
+  }
 
-  // Convert the combined value to a hexadecimal string
-  const uniqueId = combinedValue.toString(16).padStart(16, "0");
+  private getTimestamp(): number {
+    const timestamp = new Date().getTime();
+    if (this.isNewTimestamp(timestamp)) {
+      this.resetDiscriminator(timestamp);
+    }
+    return timestamp;
+  }
 
-  return uniqueId;
+  private resetDiscriminator(timestamp: number) {
+    IdGenerator.currentTimestamp = timestamp;
+    IdGenerator.discriminator = -1;
+  }
+
+  private isNewTimestamp(timestamp: number) {
+    return IdGenerator.currentTimestamp !== timestamp;
+  }
+
+  private getDiscriminator(): number {
+    const discriminator = IdGenerator.discriminator++;
+    if (discriminator > this.maxDiscriminator) {
+      throw new Error("Collision rate reached.");
+    }
+    return IdGenerator.discriminator;
+  }
 }
